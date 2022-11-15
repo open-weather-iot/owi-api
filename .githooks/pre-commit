@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+echo "pre-commit hook disabled!"
+
+exit 0
+
+TOP_LEVEL="$(git rev-parse --show-toplevel)"
+
+cd ${TOP_LEVEL}
+
+echo " ----------+ lint +---------- "
+yarn lint
+
+echo -e "\n ----------+ test +---------- "
+yarn test
+
+exit 0

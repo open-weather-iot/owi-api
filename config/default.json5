@@ -1,0 +1,7 @@
+{
+  "appName": "owi-server",
+  "logger": {
+    "errorFile": "/tmp/weather-api-error.log",
+    "combinedFile": "/tmp/weather-api-combined.log"
+  },
+}

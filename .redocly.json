@@ -1,0 +1,8 @@
+{
+  "features": {
+    "openapi": {
+      "expandDefaultServerVariables": true,
+      "showSecuritySchemeType": true
+    }
+  }
+}
