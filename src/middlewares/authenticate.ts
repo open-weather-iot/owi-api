@@ -49,7 +49,7 @@ export default function RegisterSecurityMiddlewares(swagger: any) {
 
 function ApiTokenDefinition(usage: string | null, cache: NodeCache, repository: Repository<ApiToken>) {
   return async (request: any) => {
-    const req_token = request.get('apiToken') as string
+    const req_token = request.get('api-key') as string
 
     if (typeof req_token !== 'string' || req_token.length !== 21) // nanoid identifier length
       return false
