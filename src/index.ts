@@ -144,10 +144,3 @@ export default async function bootstrap() {
   return app
 }
 bootstrap()
-
-// TODO: fix in test env
-// writing node process id (pid) to /var/run/node.pid if not in local
-if (process.env.NODE_ENV !== 'local') {
-  fs.writeFile('/var/run/node.pid', String(process.pid))
-    .catch((err) => console.trace('failed to write pid file:', err))
-}
