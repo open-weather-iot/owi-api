@@ -18,4 +18,6 @@ export class LiveMeasurements {
 
   @Column()
   raw: any
+
+  timestamp: string
 }

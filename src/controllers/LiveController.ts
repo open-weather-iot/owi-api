@@ -76,7 +76,7 @@ export default function Controller(swagger, wss: WebSocketServer) {
       }
 
       subscribers.forEach(({ ws }) => ws.send(raw))
-      await Typeorm.getRepository(LiveMeasurements).insert({ raw })
+      await Typeorm.getRepository(LiveMeasurements).insert({ raw, timestamp: new Date().toISOString() })
 
       return response.json({ ok: true })
     })
@@ -86,7 +86,7 @@ export default function Controller(swagger, wss: WebSocketServer) {
     .action(async (request: Request, response: Response) => {
       const raw = request.body
       subscribers.forEach(({ ws }) => ws.send(raw))
-      await Typeorm.getRepository(LiveMeasurements).insert({ raw })
+      await Typeorm.getRepository(LiveMeasurements).insert({ raw, timestamp: new Date().toISOString() })
 
       return response.json({ ok: true })
     })
