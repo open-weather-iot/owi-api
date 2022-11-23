@@ -75,8 +75,9 @@ export default function Controller(swagger, wss: WebSocketServer) {
         return response.json({ err: 'malformed_payload' })
       }
 
-      subscribers.forEach(({ ws }) => ws.send(raw))
-      await Typeorm.getRepository(LiveMeasurements).insert({ raw, timestamp: new Date().toISOString() })
+      const data: Omit<LiveMeasurements, '_id'> = { raw, timestamp: new Date().toISOString() }
+      subscribers.forEach(({ ws }) => ws.send(JSON.stringify(data)))
+      await Typeorm.getRepository(LiveMeasurements).insert(data)
 
       return response.json({ ok: true })
     })
