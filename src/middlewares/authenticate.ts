@@ -31,10 +31,7 @@ export default function RegisterSecurityMiddlewares(swagger: any) {
 
 function ApiTokenDefinition(usage: string, cache: NodeCache, repository: Repository<ApiToken>) {
   return async (request: any) => {
-    // TODO: use authentication token
-    return true
-
-    const req_token = request.query?.apiToken as string
+    const req_token = request.get('apiToken') as string
   
     if (typeof req_token !== 'string' || req_token.length !== 24) // ObjectId length
       return false
