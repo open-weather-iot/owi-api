@@ -13,8 +13,8 @@ export class LiveMeasurements {
   @ObjectIdColumn()
   _id: ObjectID
 
-  @Column()
-  metadata: MeasurementsMetadata
+  //@Column()
+  //metadata: MeasurementsMetadata
 
   @Column()
   raw: any

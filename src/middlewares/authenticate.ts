@@ -2,7 +2,7 @@ import { Request } from 'express'
 import assert from 'node:assert'
 import NodeCache from 'node-cache'
 import { Typeorm } from '../database/typeorm'
-import { ObjectID, Repository } from 'typeorm'
+import { Repository } from 'typeorm'
 import { ApiToken } from '../database/models'
 
 export default function RegisterSecurityMiddlewares(swagger: any) {
@@ -20,6 +20,24 @@ export default function RegisterSecurityMiddlewares(swagger: any) {
   )
 
   swagger.securityDefinition(
+    'apiToken', {
+      type: 'apiKey',
+      in: 'header',
+      name: 'authorization',
+      description: 'The user should use the access token obtained from the login endpoint.',
+    },
+    ApiTokenDefinition(null, apiTokenCache, ApiTokenRepository))
+
+  swagger.securityDefinition(
+    'apiTokensManager', {
+      type: 'apiKey',
+      in: 'header',
+      name: 'authorization',
+      description: 'The user should use the access token obtained from the login endpoint.',
+    },
+    ApiTokenDefinition('tokens-manager', apiTokenCache, ApiTokenRepository))
+
+  swagger.securityDefinition(
     'apiTokenPublish', {
       type: 'apiKey',
       in: 'header',
@@ -29,23 +47,23 @@ export default function RegisterSecurityMiddlewares(swagger: any) {
     ApiTokenDefinition('publish', apiTokenCache, ApiTokenRepository))
 }
 
-function ApiTokenDefinition(usage: string, cache: NodeCache, repository: Repository<ApiToken>) {
+function ApiTokenDefinition(usage: string | null, cache: NodeCache, repository: Repository<ApiToken>) {
   return async (request: any) => {
     const req_token = request.get('apiToken') as string
-  
-    if (typeof req_token !== 'string' || req_token.length !== 24) // ObjectId length
+
+    if (typeof req_token !== 'string' || req_token.length !== 21) // nanoid identifier length
       return false
-  
+
     if (!cache.has(req_token))
-      cache.set<ApiToken | null>(req_token, await repository.findOne({ where: { _id: ObjectID.createFromHexString(req_token) } }))
-  
+      cache.set<ApiToken | null>(req_token, await repository.findOne({ where: { _id: req_token } }))
+
     const cached_token = cache.get<ApiToken>(req_token)!
-  
-    if (!cached_token || cached_token.usage !== usage)
+
+    if (!cached_token || cached_token.deleted || (usage && cached_token.usage !== usage))
       return false
-  
+
     request.api_token = cached_token
-  
+
     return true
   }
 }

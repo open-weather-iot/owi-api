@@ -70,6 +70,7 @@ swagger.globalProduces('application/json')
 
 import RegisterSecurityMiddlewares from './middlewares/authenticate'
 import LiveController from './controllers/LiveController'
+import TokenController from './controllers/TokenController'
 import HealthCheckController from './controllers/HealthCheckController'
 import LogRequests from './middlewares/LogRequests'
 import NotFoundFallback from './middlewares/NotFoundFallback'
@@ -83,6 +84,7 @@ export default async function bootstrap() {
   RegisterSecurityMiddlewares(swagger)
   const wss = new WebSocketServer({ noServer: true })
   LiveController(swagger, wss)
+  TokenController(swagger)
   HealthCheckController(swagger)
 
   const swaggerRoutes = express.Router()
