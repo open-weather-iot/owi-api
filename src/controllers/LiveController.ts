@@ -13,10 +13,6 @@ export default function Controller(swagger, wss: WebSocketServer) {
     const connId = nanoid()
     subscribers.set(connId, { ws, request })
 
-    ws.on('message', (data) => {
-      console.log('new data', data.toString('utf-8'))
-    })
-
     ws.on('close', (code, reason) => {
       subscribers.delete(connId)
       console.log('connection closed', { code, reason: reason.toString('utf-8') })
@@ -41,7 +37,7 @@ export default function Controller(swagger, wss: WebSocketServer) {
   swagger.post('/webhook/publish')
     .security('apiTokenPublish')
     .action(async (request: Request, response: Response) => {
-      console.log(request.body.end_device_ids)
+      //console.log(request.body.end_device_ids)
       // {
       //   device_id: 'eui-70b3d57ed00546e5',
       //   application_ids: { application_id: 'lora-feec' },
@@ -49,9 +45,9 @@ export default function Controller(swagger, wss: WebSocketServer) {
       //   dev_addr: '260DAB9A'
       // }
 
-      console.log(request.body.uplink_message.rx_metadata)
+      //console.log(request.body.uplink_message.rx_metadata)
       // [
-        //   {
+      //   {
       //     gateway_ids: { gateway_id: 'feec-unicamp', eui: 'A840411ED4004150' },
       //     time: '2022-11-23T01:51:15.489833Z',
       //     timestamp: 2250343526,
@@ -63,19 +59,21 @@ export default function Controller(swagger, wss: WebSocketServer) {
       //   }
       // ]
 
-      // {"val1": 245.1374, "val2": 285.6528, "val3": 213.3888, "val4": 7.896925, "val5": 149.1341, "val5": 343.6241, "val6": 247.1249, "val8": 54.2788}
-      const raw_json = Buffer.from(request.body.uplink_message.frm_payload, 'base64').toString('utf8')
-      let raw: any
+      let measurements: LiveMeasurements['measurements']
+      let errors: LiveMeasurements['errors']
 
       try {
-        raw = JSON.parse(raw_json)
-      } catch {
-        console.log('malformed payload:', raw_json)
+        const payload = JSON.parse(Buffer.from(request.body.uplink_message.frm_payload, 'base64').toString('utf8'))
+        measurements = payload.measurements
+        errors = payload.errors
+      } catch (err) {
+        console.log(err)
+        console.log('malformed payload:', request.body.uplink_message.frm_payload)
 
         return response.json({ err: 'malformed_payload' })
       }
 
-      const data: Omit<LiveMeasurements, '_id'> = { raw, timestamp: new Date().toISOString() }
+      const data: Omit<LiveMeasurements, '_id'> = { measurements, errors, timestamp: request.body.uplink_message.rx_metadata[0].received_at }
       subscribers.forEach(({ ws }) => ws.send(JSON.stringify(data)))
       await Typeorm.getRepository(LiveMeasurements).insert(data)
 
@@ -85,9 +83,11 @@ export default function Controller(swagger, wss: WebSocketServer) {
   swagger.post('/publish')
     .security('apiTokenPublish')
     .action(async (request: Request, response: Response) => {
-      const raw = request.body
-      subscribers.forEach(({ ws }) => ws.send(raw))
-      await Typeorm.getRepository(LiveMeasurements).insert({ raw, timestamp: new Date().toISOString() })
+      const { measurements, errors } = request.body
+
+      const data: Omit<LiveMeasurements, '_id'> = { measurements, errors, timestamp: new Date().toISOString() }
+      subscribers.forEach(({ ws }) => ws.send(JSON.stringify(data)))
+      await Typeorm.getRepository(LiveMeasurements).insert(data)
 
       return response.json({ ok: true })
     })
@@ -98,18 +98,5 @@ export default function Controller(swagger, wss: WebSocketServer) {
       const data = await Typeorm.getRepository(LiveMeasurements).find({})
 
       return response.json(data)
-    })
-
-  swagger.get('/dataseries/old-format')
-    //.security('aa')
-    .action(async (request: Request, response: Response) => {
-      response.setHeader('content-type', 'text/csv')
-      //const data = await Typeorm.getRepository(LiveMeasurements).find({})
-      const data: any[] = []
-      for (let i = 0, timestamp = Date.now(); i < 10; i++, timestamp -= 1000)
-        data.push({ value: Math.random(), direction: (Math.random() * 360).toFixed(0), timestamp })
-      data.reverse()
-
-      return response.send(['value', 'direction', 'timestamp'].join(',') + '\n' + data.map((e) => Object.values(e).join(',')).join('\n'))
     })
 }

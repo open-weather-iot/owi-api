@@ -1,23 +1,15 @@
 import { Entity, Column, ObjectIdColumn, ObjectID } from 'typeorm'
 
-export class MeasurementsMetadata {
-  @Column()
-  name: string
-
-  @Column()
-  state: string
-}
-
 @Entity('live-measurements')
 export class LiveMeasurements {
   @ObjectIdColumn()
   _id: ObjectID
 
-  //@Column()
-  //metadata: MeasurementsMetadata
+  @Column()
+  measurements: Record<string, { raw: any, value: any, unit: string }>
 
   @Column()
-  raw: any
+  errors: string[]
 
   @Column()
   timestamp: string
