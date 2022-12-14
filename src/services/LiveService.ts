@@ -44,7 +44,10 @@ export default class Service {
     const raw_payload = Buffer.from(body.uplink_message.frm_payload, 'base64').toString('utf8')
     const pkt_timestamp = body.uplink_message.rx_metadata[0].received_at
 
-    return this.publishJSONMeasurement({ payload: raw_payload, timestamp: pkt_timestamp })
+    if (raw_payload[0] == '0')
+      return this.publishJSONMeasurement({ payload: raw_payload.substring(1), timestamp: pkt_timestamp })
+
+    return { status: 400, data: { err: 'fragmentation not implemented' } }
   }
 
   async publishJSONMeasurement(opts: { payload: string, timestamp: string }) {
