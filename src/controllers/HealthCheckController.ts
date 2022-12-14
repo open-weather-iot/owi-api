@@ -1,27 +1,14 @@
-import process from 'node:process'
-import { Request, Response } from 'express'
-import { Typeorm } from '../database/typeorm'
-import { LiveMeasurements } from '../database/models'
+import type { Request, Response } from 'express'
+import Service from '../services/HealthCheckService'
 
 export default function Controller(swagger) {
+  const service = new Service()
+
   swagger.get('/health_check')
     .security('internalRequest')
     .action(async (request: Request, response: Response) => {
-      const health_check = {
-        uptime: process.uptime(),
-        message: 'OK',
-        timestamp: Date.now(),
-      }
+      const { status, data } = await service.healthCheck()
 
-      try {
-        await Typeorm.getRepository(LiveMeasurements).count()
-
-        return response.json(health_check)
-      } catch (e) {
-        console.log(e)
-        health_check.message = e
-
-        return response.status(503).json(health_check)
-      }
+      return response.status(status).json(data)
     })
 }

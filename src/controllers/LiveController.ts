@@ -1,23 +1,9 @@
-import { Request, Response } from 'express'
-import { Typeorm } from '../database/typeorm'
-import { LiveMeasurements } from '../database/models'
-import { nanoid } from 'nanoid'
-import { RequestWithLogger } from 'src/middlewares/LogRequests'
-import type { WebSocket, WebSocketServer } from 'ws'
-import type { IncomingMessage } from 'http'
+import type { Request, Response } from 'express'
+import type { WebSocketServer } from 'ws'
+import Service from '../services/LiveService'
 
 export default function Controller(swagger, wss: WebSocketServer) {
-  const subscribers: Map<string, { ws: WebSocket, request: IncomingMessage }> = new Map()
-
-  function NewSubscriber(ws: WebSocket, request: IncomingMessage) {
-    const connId = nanoid()
-    subscribers.set(connId, { ws, request })
-
-    ws.on('close', (code, reason) => {
-      subscribers.delete(connId)
-      console.log('connection closed', { code, reason: reason.toString('utf-8') })
-    })
-  }
+  const service = new Service()
 
   wss.on('connection', (ws, request) => {
     console.log('connected!')
@@ -27,7 +13,7 @@ export default function Controller(swagger, wss: WebSocketServer) {
 
     switch (request.url) {
       case '/subscribe':
-        return NewSubscriber(ws, request)
+        return service.handleNewSubscriber(ws, request)
 
       default:
         return ws.close(4404, 'not found')
@@ -37,66 +23,24 @@ export default function Controller(swagger, wss: WebSocketServer) {
   swagger.post('/webhook/publish')
     .security('apiTokenPublish')
     .action(async (request: Request, response: Response) => {
-      //console.log(request.body.end_device_ids)
-      // {
-      //   device_id: 'eui-70b3d57ed00546e5',
-      //   application_ids: { application_id: 'lora-feec' },
-      //   dev_eui: '70B3D57ED00546E5',
-      //   dev_addr: '260DAB9A'
-      // }
+      const { status, data } = await service.webhookPublishMeasurement(request.body)
 
-      //console.log(request.body.uplink_message.rx_metadata)
-      // [
-      //   {
-      //     gateway_ids: { gateway_id: 'feec-unicamp', eui: 'A840411ED4004150' },
-      //     time: '2022-11-23T01:51:15.489833Z',
-      //     timestamp: 2250343526,
-      //     rssi: -36,
-      //     channel_rssi: -36,
-      //     snr: 9,
-      //     uplink_token: 'ChoKGAoMZmVlYy11bmljYW1wEgioQEEe1ABBUBDmiIaxCBoMCJP59ZsGEIa+lsACIPDctJe/vgE=',
-      //     received_at: '2022-11-23T01:51:15.472995781Z'
-      //   }
-      // ]
-
-      let measurements: LiveMeasurements['measurements']
-      let errors: LiveMeasurements['errors']
-
-      try {
-        const payload = JSON.parse(Buffer.from(request.body.uplink_message.frm_payload, 'base64').toString('utf8'))
-        measurements = payload.measurements
-        errors = payload.errors
-      } catch (err) {
-        console.log(err)
-        console.log('malformed payload:', request.body.uplink_message.frm_payload)
-
-        return response.json({ err: 'malformed_payload' })
-      }
-
-      const data: Omit<LiveMeasurements, '_id'> = { measurements, errors, timestamp: request.body.uplink_message.rx_metadata[0].received_at }
-      subscribers.forEach(({ ws }) => ws.send(JSON.stringify(data)))
-      await Typeorm.getRepository(LiveMeasurements).insert(data)
-
-      return response.json({ ok: true })
+      return response.status(status).json(data)
     })
 
   swagger.post('/publish')
     .security('apiTokenPublish')
     .action(async (request: Request, response: Response) => {
-      const { measurements, errors } = request.body
+      const { status, data } = await service.publishMeasurement({ ...request.body, timestamp: new Date().toISOString() })
 
-      const data: Omit<LiveMeasurements, '_id'> = { measurements, errors, timestamp: new Date().toISOString() }
-      subscribers.forEach(({ ws }) => ws.send(JSON.stringify(data)))
-      await Typeorm.getRepository(LiveMeasurements).insert(data)
-
-      return response.json({ ok: true })
+      return response.status(status).json(data)
     })
 
   swagger.get('/dataseries')
     //.security('aa')
     .action(async (request: Request, response: Response) => {
-      const data = await Typeorm.getRepository(LiveMeasurements).find({})
+      const { status, data } = await service.getDataseries()
 
-      return response.json(data)
+      return response.status(status).json(data)
     })
 }

@@ -69,6 +69,7 @@ swagger.globalConsumes('application/json')
 swagger.globalProduces('application/json')
 
 import RegisterSecurityMiddlewares from './middlewares/authenticate'
+import HistoricalController from './controllers/HistoricalController'
 import LiveController from './controllers/LiveController'
 import TokenController from './controllers/TokenController'
 import HealthCheckController from './controllers/HealthCheckController'
@@ -83,6 +84,7 @@ export default async function bootstrap() {
 
   RegisterSecurityMiddlewares(swagger)
   const wss = new WebSocketServer({ noServer: true })
+  HistoricalController(swagger)
   LiveController(swagger, wss)
   TokenController(swagger)
   HealthCheckController(swagger)
