@@ -7,6 +7,7 @@ import { LiveMeasurements } from '../database/models'
 export default class Service {
   private liveMeasurementsRepository = Typeorm.getRepository(LiveMeasurements)
   private subscribers: Map<string, { ws: WebSocket, request: IncomingMessage }> = new Map()
+  private fragments: Map<string, { length: number, frames: { order: number, data: string }[], timestamp: string }> = new Map()
 
   handleNewSubscriber(ws: WebSocket, request: IncomingMessage) {
     const connId = nanoid()
@@ -47,7 +48,35 @@ export default class Service {
     if (raw_payload[0] == '0')
       return this.publishJSONMeasurement({ payload: raw_payload.substring(1), timestamp: pkt_timestamp })
 
-    return { status: 400, data: { err: 'fragmentation not implemented' } }
+    // get each field of the fragment
+    // TYPE (1) + PACKET ID (10) + SEQUENCE NUMBER (3)
+    const packet_id = raw_payload.substring(1, 1 + 10)
+    const sequence = raw_payload.substring(1 + 10, 1 + 10 + 3)
+    const payload = raw_payload.substring(1 + 10 + 3)
+
+    if (!this.fragments.has(packet_id))
+      this.fragments.set(packet_id, { length: -1, frames: [], timestamp: '9' })
+
+    const frag = this.fragments.get(packet_id)!
+
+    // get number of fragments from the packet type 2 (last fragment)
+    if (raw_payload[0] == '2')
+      frag.length = parseInt(sequence)
+
+    frag.frames.push({ order: parseInt(sequence), data: payload })
+
+    // get smallest timestamp
+    if (frag.timestamp.localeCompare(pkt_timestamp) > 0)
+      frag.timestamp = pkt_timestamp
+
+    // if it has received all frames, sort them out and execute publishJSONMeasurement
+    if (frag.frames.length === frag.length) {
+      frag.frames.sort((a, b) => a.order - b.order)
+
+      return this.publishJSONMeasurement({ payload: frag.frames.map((f) => f.data).join(''), timestamp: frag.timestamp })
+    }
+
+    return { status: 200, data: { ok: true } }
   }
 
   async publishJSONMeasurement(opts: { payload: string, timestamp: string }) {
