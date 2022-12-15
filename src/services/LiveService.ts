@@ -4,6 +4,30 @@ import type { IncomingMessage } from 'http'
 import { Typeorm } from '../database/typeorm'
 import { LiveMeasurements } from '../database/models'
 
+// formato especificado nessa documentação do TTN https://www.thethingsindustries.com/docs/reference/data-formats/#uplink-messages
+// apenas alguns campos são utilizados nessa API
+interface TTNUplinkMessage {
+  end_device_ids: {
+    device_id: string,
+    application_ids: { application_id: string },
+    dev_eui: string,
+    dev_addr: string,
+  },
+  uplink_message: {
+    frm_payload: string,
+    rx_metadata: {
+      gateway_ids: { gateway_id: string, eui: string },
+      time: string,
+      timestamp: number,
+      rssi: number,
+      channel_rssi: number,
+      snr: number,
+      uplink_token: string,
+      received_at: string,
+    }[],
+  },
+}
+
 export default class Service {
   private liveMeasurementsRepository = Typeorm.getRepository(LiveMeasurements)
   private subscribers: Map<string, { ws: WebSocket, request: IncomingMessage }> = new Map()
@@ -19,7 +43,7 @@ export default class Service {
     })
   }
 
-  async webhookPublishMeasurement(body: { uplink_message: { frm_payload: string, rx_metadata: { received_at: string }[] } }) {
+  async webhookPublishMeasurement(body: TTNUplinkMessage) {
     //console.log(body.end_device_ids)
     // {
     //   device_id: 'eui-70b3d57ed00546e5',
