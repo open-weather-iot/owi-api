@@ -19,7 +19,7 @@ export default class Service {
     })
   }
 
-  async webhookPublishMeasurement(body: any) {
+  async webhookPublishMeasurement(body: { uplink_message: { frm_payload: string, rx_metadata: { received_at: string }[] } }) {
     //console.log(body.end_device_ids)
     // {
     //   device_id: 'eui-70b3d57ed00546e5',
