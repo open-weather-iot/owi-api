@@ -78,8 +78,10 @@ export default class Service {
     const sequence = raw_payload.substring(1 + 10, 1 + 10 + 3)
     const payload = raw_payload.substring(1 + 10 + 3)
 
-    if (!this.fragments.has(packet_id))
+    if (!this.fragments.has(packet_id)) {
       this.fragments.set(packet_id, { length: -1, frames: [], timestamp: '9' })
+      setTimeout(() => this.fragments.delete(packet_id), 2 * 60 * 1000) // 2 minutes limit for all fragments arrive
+    }
 
     const frag = this.fragments.get(packet_id)!
 
@@ -93,9 +95,10 @@ export default class Service {
     if (frag.timestamp.localeCompare(pkt_timestamp) > 0)
       frag.timestamp = pkt_timestamp
 
-    // if it has received all frames, sort them out and execute publishJSONMeasurement
+    // if it has received all frames, sort them out, remove from the Map and execute publishJSONMeasurement
     if (frag.frames.length === frag.length) {
       frag.frames.sort((a, b) => a.order - b.order)
+      this.fragments.delete(packet_id)
 
       return this.publishJSONMeasurement({ payload: frag.frames.map((f) => f.data).join(''), timestamp: frag.timestamp })
     }

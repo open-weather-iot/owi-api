@@ -30,6 +30,9 @@ export class Typeorm {
         LiveMeasurements,
         Aggregation10m,
       ],
+      // see: https://stackoverflow.com/a/57547013/20269772
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     })
 
     await ds.initialize()
