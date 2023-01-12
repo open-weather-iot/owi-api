@@ -73,7 +73,9 @@ import HistoricalController from './controllers/HistoricalController'
 import LiveController from './controllers/LiveController'
 import TokenController from './controllers/TokenController'
 import HealthCheckController from './controllers/HealthCheckController'
+
 import LogRequests from './middlewares/LogRequests'
+import DebugProxy from './middlewares/DebugProxy'
 import NotFoundFallback from './middlewares/NotFoundFallback'
 import CatchErrors from './middlewares/CatchErrors'
 
@@ -105,11 +107,19 @@ export default async function bootstrap() {
 
   app.disable('x-powered-by')
 
-  app.use(express.json({ limit: '10mb', strict: false }))
+  // initial request handlers
   app.use(LogRequests())
+  app.use(DebugProxy())
+
+  // body processors
+  app.use(express.json({ limit: '10mb', strict: false }))
   app.use(BinaryBody({ type: ['application/octet-stream', 'image/*', 'video/*'] }))
   app.use(MsgPackBody())
+
+  // routes
   app.use(swaggerRoutes)
+
+  // final request handlers & fallback
   app.use(NotFoundFallback())
   app.use(CatchErrors())
 
