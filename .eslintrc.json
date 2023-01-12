@@ -5,6 +5,7 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:chai-friendly/recommended",
         "plugin:mocha/recommended"
@@ -30,14 +31,15 @@
         "mocha/no-mocha-arrows": [
             "off"
         ],
-        "indent": [
-            "error", 2, { "SwitchCase": 1 }
+        "indent": "off",
+        "@typescript-eslint/indent": [
+            "error", 2, { "SwitchCase": 1, "ignoredNodes": ["PropertyDefinition"] }
         ],
         "linebreak-style": [
             "error", "unix"
         ],
         "unicode-bom": [
-          "error", "never"
+            "error", "never"
         ],
         "quotes": [
             "error", "single", { "avoidEscape": true }
@@ -63,7 +65,8 @@
         "prefer-spread": [
             "error"
         ],
-        "no-extra-parens": [
+        "no-extra-parens": "off",
+        "@typescript-eslint/no-extra-parens": [
             "error", "all", { "nestedBinaryExpressions": false, "enforceForArrowConditionals": false }
         ],
         "yoda": [
@@ -76,6 +79,9 @@
             "error"
         ],
         "no-duplicate-imports": [
+            "off"
+        ],
+        "@typescript-eslint/no-duplicate-imports": [
             "error"
         ],
         "no-unused-expressions": [
@@ -140,8 +146,8 @@
         ],
         "padding-line-between-statements": [
             "error", { "blankLine": "always", "prev": ["case", "default"], "next": "*" },
-                     { "blankLine": "always", "prev": "*", "next": "return" },
-                     { "blankLine": "always", "prev": "if", "next": "*" }
+            { "blankLine": "always", "prev": "*", "next": "return" },
+            { "blankLine": "always", "prev": "if", "next": "*" }
         ],
         "object-curly-newline": [
             "error", { "consistent": true, "multiline": true }
@@ -191,7 +197,8 @@
         "func-call-spacing": [
             "error"
         ],
-        "no-unused-vars": [
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
             "error", { "argsIgnorePattern": "^_" }
         ]
     },

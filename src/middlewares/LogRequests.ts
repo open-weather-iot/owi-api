@@ -7,7 +7,7 @@ export interface RequestWithLogger extends Request {
   logger: Logger
 }
 
-export default function LogRequests(_options?: {}) {
+export default function LogRequests() {
   return (req: RequestWithLogger, res: Response, next: NextFunction) => {
     const start = new Date()
     const traceId = nanoid()

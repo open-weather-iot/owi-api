@@ -23,7 +23,7 @@ export default function Controller(swagger) {
     })
 
   swagger.post('/api-key/rotate')
-  .security('apiToken')
+    .security('apiToken')
     .action(async (request: Request, response: Response) => {
       const { status, data } = await service.rotateApiKey({ api_token_id: (request as any).api_token._id })
 

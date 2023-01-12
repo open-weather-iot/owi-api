@@ -8,9 +8,10 @@ export default class Service {
   async initialize() {
     return this.apiTokenRepository.count()
       .then((tokens_count) => {
-        if (tokens_count === 0)
+        if (tokens_count === 0) {
           this.apiTokenRepository.insert({ _id: nanoid(21), description: 'root api key', usage: 'tokens-manager' })
             .then((new_api_token) => console.log('root api key: ', new_api_token.identifiers[0]._id))
+        }
       })
   }
 

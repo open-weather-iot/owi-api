@@ -1,5 +1,4 @@
 import { Request } from 'express'
-import assert from 'node:assert'
 import NodeCache from 'node-cache'
 import { Typeorm } from '../database/typeorm'
 import { Repository } from 'typeorm'
@@ -62,7 +61,7 @@ function ApiTokenDefinition(usage: string | null, cache: NodeCache, repository: 
     if (!cached_token || cached_token.deleted || (usage && cached_token.usage !== usage))
       return false
 
-    request.api_token = cached_token
+    request.api_token = cached_token // eslint-disable-line require-atomic-updates
 
     return true
   }

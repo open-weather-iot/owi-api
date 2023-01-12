@@ -1,4 +1,4 @@
-import { Entity, Column, ObjectIdColumn, ObjectID } from 'typeorm'
+import { Entity, ObjectIdColumn, ObjectID } from 'typeorm'
 import { LiveMeasurements } from './live_measurements'
 
 @Entity('aggregation-10m')

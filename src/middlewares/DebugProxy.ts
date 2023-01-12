@@ -4,7 +4,7 @@ import { Typeorm } from '../database/typeorm'
 import { DebugProxy as DebugProxyModel } from '../database/models'
 import { RequestWithLogger } from './LogRequests'
 
-export default function DebugProxy(_options?: {}) {
+export default function DebugProxy() {
   const debugProxyRepository = Typeorm.getRepository(DebugProxyModel)
   const proxy = httpProxy.createProxyServer()
 

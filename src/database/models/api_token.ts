@@ -12,11 +12,11 @@ export class ApiToken {
   usage: string
 
   @Column()
-  rotation: number = 0
+  rotation = 0
 
   @Column()
   parent?: string
 
   @Column()
-  deleted: boolean = false
+  deleted = false
 }

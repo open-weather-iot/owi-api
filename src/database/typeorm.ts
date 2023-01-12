@@ -1,20 +1,12 @@
-import config from 'config'
-import { DataSource, EntityManager } from 'typeorm'
+import { DataSource } from 'typeorm'
 import type { ObjectLiteral, EntityTarget, Repository, MongoRepository } from 'typeorm'
 import { Mongo } from './mongodb'
-//import { Representative } from './models/representative.entity'
-import { ApiToken } from './models/api_token'
-import { LiveMeasurements } from './models/live_measurements'
-import { Aggregation10m } from './models/aggregation_10m'
+import * as Models from './models'
 
-/*
-const repository = Typeorm.getRepository(Representative)
-repository.findOne({})
- */
 export class Typeorm {
   private static dataSource: DataSource
 
-  static async Init(swagger, options?: { use_local_db?: boolean }) {
+  static async Init(_swagger, options?: { use_local_db?: boolean }) {
     if (options === undefined)
       options = {}
 
@@ -25,11 +17,7 @@ export class Typeorm {
       url: use_local_db ? Mongo.TemporaryConnectionUri : process.env.MONGODB_URI,
       synchronize: false,
       logging: false,
-      entities: [
-        ApiToken,
-        LiveMeasurements,
-        Aggregation10m,
-      ],
+      entities: Object.values(Models),
       // see: https://stackoverflow.com/a/57547013/20269772
       useNewUrlParser: true,
       useUnifiedTopology: true,

@@ -1,4 +1,3 @@
-import fs from 'fs-extra'
 import Swagger from 'openapi-doc'
 import express from 'express'
 import uriUtils from '@axway/api-builder-uri-utils'

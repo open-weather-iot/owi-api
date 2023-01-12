@@ -1,13 +1,16 @@
 {
   "name": "owi-server",
+  "version": "0.0.0",
+  "description": "",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc --build",
     "preinstall": "cp .githooks/* .git/hooks/ && chmod -R +x .git/hooks || true",
-    "start:debug": "NODE_ENV=local ts-node-dev --respawn --ignore-watch spec-openapi.json --ignore-watch spec-openapi.__new__.json --inspect-brk --trace-warnings -- src/index.ts",
-    "start": "NODE_ENV=local ts-node-dev --respawn --ignore-watch spec-openapi.json --ignore-watch spec-openapi.__new__.json --trace-warnings -- src/index.ts",
-    "spec:openapi": "redocly preview-docs spec-openapi.json --port 8081 --use-community-edition --config .redocly.json",
-    "test": "NODE_ENV=test mocha --require chai/register-should --extension .test.mjs --exit",
-    "lint": "eslint --ext .ts --cache --cache-strategy content src"
+    "start:debug": "NODE_ENV=local ts-node-dev --respawn --inspect-brk --trace-warnings -- src/index.ts",
+    "start": "NODE_ENV=local ts-node-dev --respawn --trace-warnings -- src/index.ts",
+    "lint:js": "eslint --cache --cache-strategy content --ext .ts src",
+    "lint:ts": "tsc --noEmit",
+    "lint": "yarn lint:js; yarn lint:ts"
   },
   "dependencies": {
     "@axway/api-builder-uri-utils": "1.0.0",

@@ -69,7 +69,7 @@ export default class Service {
     const raw_payload = Buffer.from(body.uplink_message.frm_payload, 'base64').toString('utf8')
     const pkt_timestamp = body.uplink_message.rx_metadata[0].received_at
 
-    if (raw_payload[0] == '0')
+    if (raw_payload[0] === '0')
       return this.publishJSONMeasurement({ payload: raw_payload.substring(1), timestamp: pkt_timestamp })
 
     // get each field of the fragment
@@ -86,7 +86,7 @@ export default class Service {
     const frag = this.fragments.get(packet_id)!
 
     // get number of fragments from the packet type 2 (last fragment)
-    if (raw_payload[0] == '2')
+    if (raw_payload[0] === '2')
       frag.length = parseInt(sequence)
 
     frag.frames.push({ order: parseInt(sequence), data: payload })
