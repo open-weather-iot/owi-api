@@ -8,24 +8,56 @@ import { LiveMeasurements } from '../database/models'
 // apenas alguns campos são utilizados nessa API
 interface TTNUplinkMessage {
   end_device_ids: {
-    device_id: string,
-    application_ids: { application_id: string },
-    dev_eui: string,
-    dev_addr: string,
-  },
+    device_id: string
+    application_ids: { application_id: string }
+    dev_eui: string
+    dev_addr: string
+  }
+  correlation_ids: string[]
+  received_at: string
   uplink_message: {
-    frm_payload: string,
+    f_port: number
+    f_cnt: number
+    frm_payload: string
     rx_metadata: {
-      gateway_ids: { gateway_id: string, eui: string },
-      time: string,
-      timestamp: number,
-      rssi: number,
-      channel_rssi: number,
-      snr: number,
-      uplink_token: string,
-      received_at: string,
-    }[],
-  },
+      gateway_ids: { gateway_id: string, eui: string }
+      time: string
+      timestamp: number
+      rssi: number
+      channel_rssi: number
+      snr: number
+      uplink_token: string
+      received_at: string
+    }[]
+    settings: {
+      data_rate: {
+        lora: { bandwidth: number, spreading_factor: number, coding_rate: `${number}/${number}` }
+      }
+      frequency: `${number}`
+      timestamp: number
+      time: string
+    }
+    received_at: string
+    consumed_airtime: `${number}.${number}s`
+    network_ids: {
+      net_id: `${number}`
+      tenant_id: string
+      cluster_id: string
+      cluster_address: string
+    }
+  }
+}
+
+enum PacketType {
+  NotFragmented = '0',
+  Fragment = '1',
+  LastFragment = '2',
+}
+
+enum PacketSize {
+  Type = 1,
+  Id = 10,
+  Sequence = 3,
 }
 
 export default class Service {
@@ -67,16 +99,16 @@ export default class Service {
     // ]
 
     const raw_payload = Buffer.from(body.uplink_message.frm_payload, 'base64').toString('utf8')
+    const packet_type = raw_payload.substring(0, PacketSize.Type) as PacketType
     const pkt_timestamp = body.uplink_message.rx_metadata[0].received_at
 
-    if (raw_payload[0] === '0')
-      return this.publishJSONMeasurement({ payload: raw_payload.substring(1), timestamp: pkt_timestamp })
+    if (packet_type === PacketType.NotFragmented)
+      return this.publishJSONMeasurement({ payload: raw_payload.substring(PacketSize.Type), timestamp: pkt_timestamp })
 
     // get each field of the fragment
-    // TYPE (1) + PACKET ID (10) + SEQUENCE NUMBER (3)
-    const packet_id = raw_payload.substring(1, 1 + 10)
-    const sequence = raw_payload.substring(1 + 10, 1 + 10 + 3)
-    const payload = raw_payload.substring(1 + 10 + 3)
+    const packet_id = raw_payload.substring(PacketSize.Type, PacketSize.Type + PacketSize.Id)
+    const sequence = raw_payload.substring(PacketSize.Type + PacketSize.Id, PacketSize.Type + PacketSize.Id + PacketSize.Sequence)
+    const partialPayload = raw_payload.substring(PacketSize.Type + PacketSize.Id + PacketSize.Sequence)
 
     if (!this.fragments.has(packet_id)) {
       this.fragments.set(packet_id, { length: -1, frames: [], timestamp: '9' })
@@ -85,11 +117,11 @@ export default class Service {
 
     const frag = this.fragments.get(packet_id)!
 
-    // get number of fragments from the packet type 2 (last fragment)
-    if (raw_payload[0] === '2')
+    // get number of fragments from the last fragment
+    if (packet_type === PacketType.LastFragment)
       frag.length = parseInt(sequence)
 
-    frag.frames.push({ order: parseInt(sequence), data: payload })
+    frag.frames.push({ order: parseInt(sequence), data: partialPayload })
 
     // get smallest timestamp
     if (frag.timestamp.localeCompare(pkt_timestamp) > 0)
