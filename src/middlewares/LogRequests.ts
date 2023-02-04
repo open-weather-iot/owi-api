@@ -18,7 +18,7 @@ export default function LogRequests() {
       const end = new Date()
       const elapsedMs = end.getTime() - start.getTime()
 
-      req.logger.info(LOG_EVENTS.REQUEST, {
+      /*req.logger.info(LOG_EVENTS.REQUEST, {
         method: req.method,
         url: req.url,
         route: req.route?.path,
@@ -27,7 +27,7 @@ export default function LogRequests() {
         end: end.toISOString(),
         elapsedMs,
         env: process.env.NODE_ENV,
-      })
+      })*/
     })
 
     next()

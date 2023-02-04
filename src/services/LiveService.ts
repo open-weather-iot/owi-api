@@ -84,7 +84,7 @@ export default class Service {
     //   dev_addr: '260DAB9A'
     // }
 
-    //console.log(body.uplink_message.rx_metadata)
+    console.log('\n---', { frame_counter: body.uplink_message.f_cnt, consumed_airtime: body.uplink_message.consumed_airtime })
     // [
     //   {
     //     gateway_ids: { gateway_id: 'feec-unicamp', eui: 'A840411ED4004150' },
@@ -102,17 +102,21 @@ export default class Service {
     const packet_type = raw_payload.substring(0, PacketSize.Type) as PacketType
     const pkt_timestamp = body.uplink_message.rx_metadata[0].received_at
 
-    if (packet_type === PacketType.NotFragmented)
+    if (packet_type === PacketType.NotFragmented) {
+      console.log({ packet_type })
       return this.publishJSONMeasurement({ payload: raw_payload.substring(PacketSize.Type), timestamp: pkt_timestamp })
+    }
 
     // get each field of the fragment
     const packet_id = raw_payload.substring(PacketSize.Type, PacketSize.Type + PacketSize.Id)
     const sequence = raw_payload.substring(PacketSize.Type + PacketSize.Id, PacketSize.Type + PacketSize.Id + PacketSize.Sequence)
     const partialPayload = raw_payload.substring(PacketSize.Type + PacketSize.Id + PacketSize.Sequence)
 
+    console.log({ packet_type, packet_id, sequence })
+
     if (!this.fragments.has(packet_id)) {
       this.fragments.set(packet_id, { length: -1, frames: [], timestamp: '9' })
-      setTimeout(() => this.fragments.delete(packet_id), 2 * 60 * 1000) // 2 minutes limit for all fragments arrive
+      //setTimeout(() => this.fragments.delete(packet_id), 2 * 60 * 1000) // 2 minutes limit for all fragments arrive
     }
 
     const frag = this.fragments.get(packet_id)!
@@ -130,7 +134,7 @@ export default class Service {
     // if it has received all frames, sort them out, remove from the Map and execute publishJSONMeasurement
     if (frag.frames.length === frag.length) {
       frag.frames.sort((a, b) => a.order - b.order)
-      this.fragments.delete(packet_id)
+      //this.fragments.delete(packet_id)
 
       return this.publishJSONMeasurement({ payload: frag.frames.map((f) => f.data).join(''), timestamp: frag.timestamp })
     }
